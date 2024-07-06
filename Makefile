@@ -16,11 +16,11 @@ COMMANDS_HANDLER = $(SRC_DIR)/commands_handler
 # All objects files
 TREE_FILE = $(OBJECTS_DIR)/tree
 BLOB_FILE = $(OBJECTS_DIR)/blob
-COMMIT_OBJ_FILE = $(OBJECTS_DIR)/commit
+COMMIT_OBJ_FILE = $(OBJECTS_DIR)/commit_obj
 
 # All commands file
 ADD_FILE = $(COMMANDS_DIR)/add
-COMMIT_CMD_FILE = $(COMMANDS_DIR)/commit
+COMMIT_CMD_FILE = $(COMMANDS_DIR)/commit_cmd
 INIT_FILE = $(COMMANDS_DIR)/init
 LOG_FILE = $(COMMANDS_DIR)/log
 STATUS_FILE = $(COMMANDS_DIR)/status
@@ -64,8 +64,11 @@ COMMON_FILES = $(MAIN_FILE).o $(COMMANDS_HANDLER).o
 OBJECTS_FILES = $(TREE_FILE).o $(COMMIT_OBJ_FILE).o $(BLOB_FILE).o
 
 # Rules for commands
+
+# INIT Command -> We only need to compile main command_helpers and init file
 init_command: $(COMMON_FILES) $(INIT_FILE).o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(INIT_FILE).o -o $(CURDIR)/init_command
+
 
 add_command: $(COMMON_FILES) $(ADD_FILE).o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(ADD_FILE).o -o $(CURDIR)/add_command
