@@ -8,12 +8,9 @@ fi
 
 target_dir=$(pwd)
 current_dir=$(dirname "$(readlink -f "$0")")
-# Check if the first argument is "add"
-if [ "$1" == "init" ]; then
-    cd $current_dir
-    make init_command
-    ./init_command $@ $target_dir
-    make clean
-else
-    echo "Invalid argument. Nothing to do."
-fi
+
+cd $current_dir
+make run_command
+./run_command $@ $target_dir
+make clean
+

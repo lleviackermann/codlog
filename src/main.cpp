@@ -14,8 +14,11 @@ int main(int argc, char* argv[]) {
 
         CommandsHandler::executeCommand(command, args);
     } catch (const std::invalid_argument& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << e.what() << "\n";
+        return EXIT_FAILURE; // Exit the program with a failure code
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << "\n";
         return EXIT_FAILURE; // Exit the program with a failure code
     }
-    return EXIT_SUCCESS;
+    return EXIT_SUCCESS; // Exit the program with a success code
 }

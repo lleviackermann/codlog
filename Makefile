@@ -7,6 +7,9 @@ OBJECTS_DIR = $(SRC_DIR)/objects
 # Directory containing all the commands
 COMMANDS_DIR = $(SRC_DIR)/commands
 
+# Utills Directory
+UTILLS_DIR = $(SRC_DIR)/utills
+
 # Main cpp file
 MAIN_FILE = $(SRC_DIR)/main
 
@@ -25,25 +28,28 @@ INIT_FILE = $(COMMANDS_DIR)/init
 LOG_FILE = $(COMMANDS_DIR)/log
 STATUS_FILE = $(COMMANDS_DIR)/status
 
+# Helper file
+HELPER_FILE = $(UTILLS_DIR)/helper
+
 CC = g++
 CFLAGS = -Wall -g -std=c++17
-LDFLAGS =
+LDFLAGS = -lssl -lcrypto
 
 # Source files
-SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp
+SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
 
 # Header files directory
-INCLUDES = -I$(SRC_DIR) -I$(OBJECTS_DIR) -I$(COMMANDS_DIR)
+INCLUDES = -I$(SRC_DIR) -I$(OBJECTS_DIR) -I$(COMMANDS_DIR) -I$(UTILLS_DIR)
 
 
-.PHONY: init_command add_command status_command commit_command log_command clean
+.PHONY: run_command clean
 
 # Pattern rule for object files
 %.o: %.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ $(LDFLAGS)
 
 # Dependencies
 $(MAIN_FILE).o: $(MAIN_FILE).cpp $(COMMANDS_HANDLER).h
@@ -56,32 +62,15 @@ $(COMMIT_CMD_FILE).o: $(COMMIT_CMD_FILE).cpp $(COMMIT_CMD_FILE).h
 $(INIT_FILE).o: $(INIT_FILE).cpp $(INIT_FILE).h
 $(LOG_FILE).o: $(LOG_FILE).cpp $(LOG_FILE).h
 $(STATUS_FILE).o: $(STATUS_FILE).cpp $(STATUS_FILE).h
-
-# Common files which are required to compile for each command
-COMMON_FILES = $(MAIN_FILE).o $(COMMANDS_HANDLER).o
-
-# All objects files
-OBJECTS_FILES = $(TREE_FILE).o $(COMMIT_OBJ_FILE).o $(BLOB_FILE).o
+$(HELPER_FILE).o: $(HELPER_FILE).cpp $(HELPER_FILE).h
 
 # Rules for commands
 
-# INIT Command -> We only need to compile main command_helpers and init file
-init_command: $(COMMON_FILES) $(INIT_FILE).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(INIT_FILE).o -o $(CURDIR)/init_command
+run_command: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(CURDIR)/run_command $(LDFLAGS)
 
-
-add_command: $(COMMON_FILES) $(ADD_FILE).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(ADD_FILE).o -o $(CURDIR)/add_command
-
-status_command: $(COMMON_FILES) $(STATUS_FILE).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(STATUS_FILE).o -o $(CURDIR)/status_command
-
-commit_command: $(COMMON_FILES) $(COMMIT_CMD_FILE).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(COMMIT_CMD_FILE).o -o $(CURDIR)/commit_command
-
-log_command: $(COMMON_FILES) $(LOG_FILE).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMMON_FILES) $(LOG_FILE).o -o $(CURDIR)/log_command
 
 # Clean rule
+
 clean:
-	rm -f $(OBJS) $(SRC_DIR)/myvcs $(COMMANDS_DIR)/*_command $(CURDIR)/*_command
+	rm -f $(OBJS) $(SRC_DIR)/myvcs $(CURDIR)/*_command
