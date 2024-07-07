@@ -1,8 +1,11 @@
 #include <add.h>
 #include <blob.h>
+#include <helper.h>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <queue>
+#include <unordered_map>
 #include <filesystem>
 
 void check_add_arguments(const std::vector<std::string>& args) {
@@ -41,10 +44,12 @@ void check_add_arguments(const std::vector<std::string>& args) {
 
 void add_command(const std::vector<std::string>& args, std::string& initialized_repo) {
     check_add_arguments(args);
+    std::unordered_map<std::filesystem::path, file_index> blobs_store;
     std::filesystem::path directory = args.back();
     std::filesystem::path file_path = directory / args[0];
     Blob temp(file_path);
     std::string hash = temp.getHash();
     std::cout << hash << std::endl;
+    std::cout << temp.getFileMode() << "\n";
     std::cout << "initalised repo " << initialized_repo << "\n";
 }

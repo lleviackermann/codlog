@@ -13,4 +13,4 @@ cd $current_dir
 make run_command
 ./run_command $@ $target_dir
 make clean
-
+cd $target_dir

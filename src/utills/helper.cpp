@@ -1,5 +1,7 @@
 #include <helper.h>
+#include <filemode.h>
 #include <string>
+#include <ostream>
 #include <filesystem>
 
 std::string get_initialised_repo(const std::string& target_dir) {
@@ -14,4 +16,17 @@ std::string get_initialised_repo(const std::string& target_dir) {
     }
 
     return "";
+}
+
+std::ostream& operator<<(std::ostream& os, FileMode mode) {
+    switch (mode) {
+        case FileMode::EXECUTABLE:
+            return os << "EXECUTABLE (" << static_cast<int>(mode) << ")";
+        case FileMode::REGULAR:
+            return os << "REGULAR (" << static_cast<int>(mode) << ")";
+        case FileMode::DIRECTORY:
+            return os << "DIRECTORY (" << static_cast<int>(mode) << ")";
+        default:
+            return os << "UNKNOWN (" << static_cast<int>(mode) << ")";
+    }
 }

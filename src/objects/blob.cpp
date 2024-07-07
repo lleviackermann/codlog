@@ -1,4 +1,4 @@
-// #include "blob.h"
+#include <filemode.h>
 #include <blob.h>
 #include <sstream>
 #include <iomanip>
@@ -9,7 +9,6 @@ std::string Blob::calculateSHA1(const std::vector<unsigned char> &data)
 {
     unsigned char hash[SHA_DIGEST_LENGTH];
     SHA1(data.data(), data.size(), hash);
-
     std::stringstream ss;
     for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
     {
@@ -40,6 +39,9 @@ void Blob::read_file_binary()
 
 Blob::Blob(const std::filesystem::path &file_path) : file(file_path, std::ios::binary | std::ios::ate)
 {
+    std::filesystem::file_status status = std::filesystem::status(file_path);
+    if((status.permissions() & std::filesystem::perms::owner_exec) != std::filesystem::perms::none) file_mode = FileMode::EXECUTABLE;
+    else file_mode = FileMode::REGULAR;
     if (!file.is_open())
     {
         throw std::runtime_error("File_Path: ./src/objects/blob.cpp\nFunction: Blob Constructor\nError: Unable to open file: " + file_path.string());
@@ -69,6 +71,10 @@ const std::vector<unsigned char> &Blob::getContent() const
 const std::string &Blob::getHash() const
 {
     return hash;
+}
+
+const FileMode Blob::getFileMode() const {
+    return file_mode;
 }
 
 size_t Blob::getSize() const
