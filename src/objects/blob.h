@@ -15,10 +15,10 @@ private:
     FileMode file_mode;
     std::string calculateSHA1(const std::vector<unsigned char>& data);
     void read_file_binary();
+    std::vector<unsigned char> getBlobHashContent() const;
 
 public:
     explicit Blob(const std::filesystem::path& file_path);
-    explicit Blob(const std::vector<unsigned char>& binary_content);
     ~Blob();
 
     // Disable copy constructor and assignment operator
@@ -26,13 +26,12 @@ public:
     Blob& operator=(const Blob&) = delete;
 
     const std::vector<unsigned char>& getContent() const;
-    const std::filesystem::path& getFilePath() const;
-    const std::string& getHash() const;
-    const FileMode getFileMode() const;
+    const std::string getHash() const;
+    const std::string getFileMode() const;
     size_t getSize() const;
 
-    std::vector<unsigned char> serialize() const;
-    static Blob deserialize(const std::vector<unsigned char>& data);
+    static std::vector<unsigned char> getOriginalContent(const std::vector<unsigned char>& data);
+    void writeToFile(const std::filesystem::path& output_directory) const;
 };
 
 #endif 
