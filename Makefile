@@ -28,15 +28,16 @@ INIT_FILE = $(COMMANDS_DIR)/init
 LOG_FILE = $(COMMANDS_DIR)/log
 STATUS_FILE = $(COMMANDS_DIR)/status
 
-# Helper file
+# Helpers file
 HELPER_FILE = $(UTILLS_DIR)/helper
+STAGE_FILE = $(UTILLS_DIR)/stage
 
 CC = g++
 CFLAGS = -Wall -g -std=c++17
 LDFLAGS = -lssl -lcrypto
 
 # Source files
-SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp
+SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp $(STAGE_FILE).cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -63,6 +64,7 @@ $(INIT_FILE).o: $(INIT_FILE).cpp $(INIT_FILE).h
 $(LOG_FILE).o: $(LOG_FILE).cpp $(LOG_FILE).h
 $(STATUS_FILE).o: $(STATUS_FILE).cpp $(STATUS_FILE).h
 $(HELPER_FILE).o: $(HELPER_FILE).cpp $(HELPER_FILE).h
+$(STAGE_FILE).o: $(STAGE_FILE).cpp $(STAGE_FILE).h
 
 # Rules for commands
 

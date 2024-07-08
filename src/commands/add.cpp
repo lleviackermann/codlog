@@ -1,7 +1,7 @@
 #include <add.h>
 #include <blob.h>
 #include <helper.h>
-#include <tree.h>
+#include <stage.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -16,9 +16,8 @@ namespace {
     std::mutex queue_mutex;
     std::mutex map_mutex;
     std::string blob_def = "blob";
-    std::string tree_def = "tree";
-    std::string tree_mode = "040000";
     std::mutex file_write_mutex;
+    std::unique_ptr<StagingArea> index_file_entries;
 }
 
 void check_add_arguments(const std::vector<std::string>& args) {
@@ -86,7 +85,6 @@ void get_all_file_paths(const std::vector<std::string>& args, std::queue<std::fi
 }
 
 void process_files(std::queue<std::filesystem::path>& filePathStore,
-                   std::unordered_map<std::filesystem::path, TreeEntry>& obj_info,
                    const std::filesystem::path& repo_path,
                    std::atomic<bool>& done) {
     while (true) {
@@ -111,10 +109,9 @@ void process_files(std::queue<std::filesystem::path>& filePathStore,
                 std::lock_guard<std::mutex> locki(file_write_mutex);
                 blob.writeToFile(obj_directory);
             }
-            TreeEntry temp_blob(blob.getFileMode(), blob_def, blob.getHash(), full_path.filename().string());
             {
                 std::lock_guard<std::mutex> lock(map_mutex);
-                obj_info[relative_path] = std::move(temp_blob);
+                index_file_entries->update_or_add_entry(relative_path.string(), blob.getFileMode(), blob.getHash());
             }
             
             // return;  // We've processed a file, so our job is done
@@ -124,7 +121,7 @@ void process_files(std::queue<std::filesystem::path>& filePathStore,
     }
 }
 
-void create_blobs_and_get_hashes(std::queue<std::filesystem::path>& filePathStore, const std::filesystem::path& repo_path, std::unordered_map<std::filesystem::path, TreeEntry>& obj_info) {
+void create_blobs_and_get_hashes(std::queue<std::filesystem::path>& filePathStore, const std::filesystem::path& repo_path) {
     
     std::atomic<bool> done(false);
 
@@ -134,11 +131,9 @@ void create_blobs_and_get_hashes(std::queue<std::filesystem::path>& filePathStor
     for (unsigned int i = 0; i < num_threads; ++i) {
         threads.emplace_back(
             static_cast<void(*)(std::queue<std::filesystem::path>&,
-                                std::unordered_map<std::filesystem::path, TreeEntry>&,
                                 const std::filesystem::path&,
                                 std::atomic<bool>&)>(process_files),
             std::ref(filePathStore),
-            std::ref(obj_info),
             std::ref(repo_path),
             std::ref(done)
         );
@@ -150,54 +145,12 @@ void create_blobs_and_get_hashes(std::queue<std::filesystem::path>& filePathStor
     done = true;
 }
 
-int make_tree_and_store(std::unordered_map<std::filesystem::path, TreeEntry>& obj_info, const std::filesystem::path& cur_dir, const std::filesystem::path& repo_path) {
-    // std::cout << cur_dir << "\n";
-    // return 0;
-    if(cur_dir.filename() == ".codlog" || cur_dir.filename() == ".git") return 0;
-    int file_no = 0;
-    Tree cur_tree;
-    for(const auto& cur_path : std::filesystem::directory_iterator(cur_dir)) {
-        const std::filesystem::path cur_path_relative = std::filesystem::relative(cur_path, repo_path);
-        if(std::filesystem::is_directory(cur_path)) {
-            // std::cout << cur_dir << " " << cur_path << "\n";
-            int cnt = make_tree_and_store(std::ref(obj_info), cur_path, repo_path);
-            file_no += cnt;
-            if(cnt != 0) {
-                cur_tree.addEntry(obj_info[cur_path_relative]);
-            }
-        } else {
-            cur_tree.addEntry(obj_info[cur_path_relative]);
-            file_no++;
-        }
-    }
-    if(file_no) {
-        std::filesystem::path obj_directory = repo_path / ".codlog" / "objects";
-        TreeEntry cur_tree_entry(tree_mode, tree_def, cur_tree.calculateHash(), cur_dir.filename());
-        std::filesystem::path cur_dir_relative = std::filesystem::relative(cur_dir, repo_path);
-        cur_tree.writeToFile(obj_directory);
-        if(cur_dir == repo_path) cur_dir_relative = "./";
-        obj_info[cur_dir_relative] = std::move(cur_tree_entry);
-    }
-    return file_no;
-}
-
 void add_command(const std::vector<std::string>& args, std::string& initialized_repo) {
     check_add_arguments(args);
     std::queue<std::filesystem::path> filePathStore;
     get_all_file_paths(args, filePathStore, initialized_repo);
-    std::unordered_map<std::filesystem::path, TreeEntry> obj_info;
-    create_blobs_and_get_hashes(filePathStore, initialized_repo, obj_info);
-    make_tree_and_store(obj_info, initialized_repo, initialized_repo);
-    for(auto [pat, has] : obj_info) {
-        if(has.obj_type == "blob") continue;
-        std::cout << pat << " -> " << has << std::endl;
-    }
-    // std::filesystem::path directory = args.back();
-    // std::filesystem::path file_path = directory / args[0];
-    // Blob temp(file_path);
-    // std::string hash = temp.getHash();
-    // std::cout << hash << std::endl;
-    // std::cout << temp.getFileMode() << "\n";
-    // for(auto ch : temp.getContent()) std::cout << ch;
-    std::cout << "initalised repo " << initialized_repo << "\n";
+    const std::filesystem::path index_file_path = initialized_repo + "/.codlog/index";
+    index_file_entries = std::make_unique<StagingArea>(index_file_path);
+    create_blobs_and_get_hashes(filePathStore, initialized_repo);
+    index_file_entries->write_to_index_file(index_file_path);
 }
