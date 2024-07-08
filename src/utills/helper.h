@@ -12,10 +12,12 @@ struct TreeEntry {
     std::string obj_name;
 
     TreeEntry() = default;
-    TreeEntry(const std::string& mode, const std::string& obj_type, const std::string& hash, const std::string& name);
+
+    TreeEntry(const std::string& mode, const std::string& type, const std::string& hash, const std::string& name);
 
     friend std::ostream& operator<<(std::ostream& os, const TreeEntry& entry);
 };
+
 
 std::string get_initialised_repo(const std::string& target_dir);
 std::ostream& operator<<(std::ostream& os, FileMode mode);

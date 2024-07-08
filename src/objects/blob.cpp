@@ -124,7 +124,7 @@ void Blob::writeToFile(const std::filesystem::path &output_directory) const
 
     std::filesystem::path output_file_path = output_file_sudir_path / hash.substr(2);
     // Check if the file already exists
-    std::cout << output_file_path << std::endl;
+    // std::cout << output_file_path << std::endl;
     if (std::filesystem::exists(output_file_path))
     {
         return;

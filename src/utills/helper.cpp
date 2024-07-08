@@ -6,6 +6,7 @@
 
 TreeEntry::TreeEntry(const std::string& mode, const std::string& obj_type, const std::string& hash, const std::string& name) : obj_mode(mode), obj_type(obj_type), obj_hash(hash), obj_name(name) {}
 
+
 std::string get_initialised_repo(const std::string& target_dir) {
     std::filesystem::path target_dir_path = target_dir;
 
