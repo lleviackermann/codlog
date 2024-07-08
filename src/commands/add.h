@@ -15,10 +15,9 @@ void add_command(const std::vector<std::string> &args, std::string &initialized_
 void check_add_arguments(const std::vector<std::string> &args);
 void get_all_file_paths(const std::vector<std::string> &args, std::queue<std::filesystem::path> &filePathStore, std::string &initialized_repo);
 void process_files(std::queue<std::filesystem::path>& filePathStore,
-                   std::unordered_map<std::filesystem::path, TreeEntry>& obj_info,
                    const std::filesystem::path& repo_path,
                    std::atomic<bool>& done);
-void create_blobs_and_get_hashes(std::queue<std::filesystem::path> &filePathStore, const std::filesystem::path &repo_path, std::unordered_map<std::filesystem::path, TreeEntry>& obj_info);
+void create_blobs_and_get_hashes(std::queue<std::filesystem::path> &filePathStore, const std::filesystem::path &repo_path);
 
 
 #endif

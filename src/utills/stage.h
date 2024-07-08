@@ -10,6 +10,7 @@ struct index_entry
     std::string obj_mode;
     std::string obj_hash;
 
+    index_entry() = default;
     index_entry(const std::string &obj_mode, const std::string &obj_hash);
 };
 
@@ -26,8 +27,10 @@ public:
 
     void update_or_add_entry(const std::filesystem::path &file_path, const std::string &obj_mode, const std::string &obj_hash);
     void delete_entry(std::filesystem::path &deleted_file_path);
+    std::pair<std::string, std::string> get_index_entry(std::filesystem::path &get_file_path);
     void write_to_index_file(const std::filesystem::path& index_file_path);
     std::string to_string() const;
+    std::unordered_map<std::string, index_entry>& get_entries();
 };
 
 #endif

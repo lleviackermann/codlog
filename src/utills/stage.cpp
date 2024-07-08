@@ -46,7 +46,23 @@ void StagingArea::update_or_add_entry(const std::filesystem::path& file_path, co
 }
 
 void StagingArea::delete_entry(std::filesystem::path& deleted_file_path) {
-    entries.erase(deleted_file_path.string());
+    if(entries.count(deleted_file_path)) {
+        entries.erase(deleted_file_path.string());
+
+    }
+}
+
+std::unordered_map<std::string, index_entry>& StagingArea::get_entries(){
+    return entries;
+}
+
+std::pair<std::string, std::string> StagingArea::get_index_entry(std::filesystem::path &get_file_path) {
+    if(entries.count(get_file_path.string())) {
+        const auto& ind_ent = entries[get_file_path.string()];
+        return {ind_ent.obj_mode, ind_ent.obj_hash};
+    } else {
+        return {"-1", "-1"};
+    }
 }
 
 void StagingArea::write_to_index_file(const std::filesystem::path& index_file_path) {

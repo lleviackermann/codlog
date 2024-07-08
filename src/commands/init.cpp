@@ -26,10 +26,12 @@ void create_codlog_directory(const std::string& target_dir) {
     std::filesystem::create_directory(codlog_dir / "refs");
     std::filesystem::create_directory(codlog_dir / "refs" / "heads");
     std::ofstream index_file(codlog_dir / "index");
+    std::ofstream staged_file(codlog_dir / "staged");
     if(index_file.is_open()) {
         index_file.close();
     }
 
+    if(staged_file.is_open()) staged_file.close();
     std::ofstream head_file(codlog_dir / "HEAD");
     if (!head_file.is_open()) {
         throw std::runtime_error("File_path: ./src/commands/init.cpp\nFunction: create_codlog_directory\nError: Unable to create HEAD file");
@@ -40,7 +42,7 @@ void create_codlog_directory(const std::string& target_dir) {
 }
 
 void check_init_arguments(const std::vector<std::string>& args) {
-    if (args.size() > 2) {
+    if (args.size() > 1) {
         throw std::invalid_argument("Too many arguments. Usage: codlog init [directory_name]");
     }
 }

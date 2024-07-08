@@ -9,7 +9,7 @@
 class Tree {
 private:
     std::vector<TreeEntry> entries;
-
+    
 public:
     void addEntry(const std::string& mode, const std::string& obj_ty, const std::string& hash, const std::string& name);
     void addEntry(TreeEntry toadd);

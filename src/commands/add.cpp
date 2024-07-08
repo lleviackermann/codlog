@@ -14,10 +14,12 @@
 
 namespace {
     std::mutex queue_mutex;
-    std::mutex map_mutex;
+    std::mutex index_file_mutex;
+    std::mutex staged_file_mutex;
     std::string blob_def = "blob";
     std::mutex file_write_mutex;
     std::unique_ptr<StagingArea> index_file_entries;
+    std::unique_ptr<StagingArea> staged_file_entries;
 }
 
 void check_add_arguments(const std::vector<std::string>& args) {
@@ -105,13 +107,21 @@ void process_files(std::queue<std::filesystem::path>& filePathStore,
         std::filesystem::path obj_directory = repo_path / ".codlog" / "objects";
         try {
             Blob blob(full_path);
+            std::string file_hash = blob.getHash();
             {
                 std::lock_guard<std::mutex> locki(file_write_mutex);
                 blob.writeToFile(obj_directory);
             }
+            bool flag__ = false;
             {
-                std::lock_guard<std::mutex> lock(map_mutex);
-                index_file_entries->update_or_add_entry(relative_path.string(), blob.getFileMode(), blob.getHash());
+                std::lock_guard<std::mutex> index_lock(index_file_mutex);
+                std::pair<std::string, std::string> ent = index_file_entries->get_index_entry(relative_path);
+                if(ent.second == file_hash) flag__ = true;
+            }
+            {
+                std::lock_guard<std::mutex> lock(staged_file_mutex);
+                if(flag__) staged_file_entries->delete_entry(relative_path);
+                else staged_file_entries->update_or_add_entry(relative_path, blob.getFileMode(), file_hash);
             }
             
             // return;  // We've processed a file, so our job is done
@@ -150,7 +160,9 @@ void add_command(const std::vector<std::string>& args, std::string& initialized_
     std::queue<std::filesystem::path> filePathStore;
     get_all_file_paths(args, filePathStore, initialized_repo);
     const std::filesystem::path index_file_path = initialized_repo + "/.codlog/index";
+    const std::filesystem::path staged_file_path = initialized_repo + "/.codlog/staged";
     index_file_entries = std::make_unique<StagingArea>(index_file_path);
+    staged_file_entries = std::make_unique<StagingArea>(staged_file_path);
     create_blobs_and_get_hashes(filePathStore, initialized_repo);
-    index_file_entries->write_to_index_file(index_file_path);
+    staged_file_entries->write_to_index_file(staged_file_path);
 }

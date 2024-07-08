@@ -18,6 +18,7 @@ std::string get_initialised_repo(const std::string& target_dir) {
         }
     }
 
+    throw std::invalid_argument("Error: not a codlog repository (or any parent up to mount point /).\nTo initialize a repo run the command `codlog init [directory_name]`\n");
     return "";
 }
 
