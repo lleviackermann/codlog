@@ -1,7 +1,6 @@
 #ifndef HELPER_H
 #define HELPER_H
 
-#include <filemode.h>
 #include <string>
 #include <ostream>
 
@@ -18,6 +17,11 @@ struct TreeEntry {
     friend std::ostream& operator<<(std::ostream& os, const TreeEntry& entry);
 };
 
+enum class FileMode {
+    EXECUTABLE = 100755,
+    REGULAR = 100644,
+    DIRECTORY = 040000
+};
 
 std::string get_initialised_repo(const std::string& target_dir);
 std::ostream& operator<<(std::ostream& os, FileMode mode);

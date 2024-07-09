@@ -27,17 +27,19 @@ COMMIT_CMD_FILE = $(COMMANDS_DIR)/commit_cmd
 INIT_FILE = $(COMMANDS_DIR)/init
 LOG_FILE = $(COMMANDS_DIR)/log
 STATUS_FILE = $(COMMANDS_DIR)/status
+CONFIG_CMD_FILE = $(COMMANDS_DIR)/config_cmd
 
-# Helpers file
+# All Utills file
 HELPER_FILE = $(UTILLS_DIR)/helper
 STAGE_FILE = $(UTILLS_DIR)/stage
+CONFIG_UTILLS_FILE = $(UTILLS_DIR)/config
 
 CC = g++
 CFLAGS = -Wall -g -std=c++17
 LDFLAGS = -lssl -lcrypto
 
 # Source files
-SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp $(STAGE_FILE).cpp
+SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp $(STAGE_FILE).cpp $(CONFIG_UTILLS_FILE).cpp $(CONFIG_CMD_FILE).cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -65,6 +67,8 @@ $(LOG_FILE).o: $(LOG_FILE).cpp $(LOG_FILE).h
 $(STATUS_FILE).o: $(STATUS_FILE).cpp $(STATUS_FILE).h
 $(HELPER_FILE).o: $(HELPER_FILE).cpp $(HELPER_FILE).h
 $(STAGE_FILE).o: $(STAGE_FILE).cpp $(STAGE_FILE).h
+$(CONFIG_UTILLS_FILE).o: $(CONFIG_UTILLS_FILE).cpp $(CONFIG_UTILLS_FILE).h
+$(CONFIG_CMD_FILE).o: $(CONFIG_CMD_FILE).cpp $(CONFIG_CMD_FILE).h
 
 # Rules for commands
 

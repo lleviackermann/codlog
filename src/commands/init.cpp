@@ -1,4 +1,5 @@
 #include <init.h>
+#include <config.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -42,7 +43,7 @@ void create_codlog_directory(const std::string& target_dir) {
 }
 
 void check_init_arguments(const std::vector<std::string>& args) {
-    if (args.size() > 1) {
+    if (args.size() > 2) {
         throw std::invalid_argument("Too many arguments. Usage: codlog init [directory_name]");
     }
 }
@@ -53,4 +54,5 @@ void init_command(const std::vector<std::string>& args) {
     const std::string target_dir = args.back() + (args.size() > 1 ? "/" + args[0] : "");
     check_if_already_initalised(target_dir);
     create_codlog_directory(target_dir);
+    Config::init_config(std::filesystem::path(target_dir));
 }

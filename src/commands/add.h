@@ -1,7 +1,6 @@
 #ifndef ADD_H
 #define ADD_H
 
-#include <filemode.h>
 #include <helper.h>
 #include <vector>
 #include <string>

@@ -4,6 +4,7 @@
 #include <add.h>
 #include <commit_cmd.h>
 #include <status.h>
+#include <config_cmd.h>
 #include <iostream>
 #include <string>
 
@@ -19,6 +20,11 @@ int CommandsHandler::executeCommand(const std::string& command, const std::vecto
     } else if (command == "status") {
         std::string initialized_repo = get_initialised_repo(args.back());
         status_command(args, initialized_repo);
+    } else if (command == "config") {
+        config_command(args);
+    // } else if (command == "log") {
+    //     log(args);
+    // } 
     // } else if (command == "log") {
     //     log(args);
     } else {

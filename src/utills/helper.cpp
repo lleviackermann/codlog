@@ -1,5 +1,4 @@
 #include <helper.h>
-#include <filemode.h>
 #include <string>
 #include <ostream>
 #include <filesystem>
