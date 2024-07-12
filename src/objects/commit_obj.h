@@ -1,37 +1,35 @@
-// #ifndef COMMIT_OBJ_H
-// #define COMMIT_OBJ_H
+#ifndef COMMIT_OBJ_H
+#define COMMIT_OBJ_H
 
-// #include <string>
-// #include <vector>
-// #include <unordered_map>
-// #include <filesystem>
+#include <string>
+#include <vector>
+#include <ctime>
 
-// class Commit {
-// public:
-//     Commit();
-//     Commit(const std::string& message, const std::string& author, const std::string& parent_hash);
+class Commit
+{
+private:
+    std::string treeHash;
+    std::string parentTreeHash;
+    std::string message;
+    std::string committerName;
+    std::string committerEmail;
+    std::time_t timestamp;
+    std::string hash;
 
-//     void set_tree_hash(const std::string& hash);
-//     void add_file(const std::string& path, const std::string& hash, const std::string& mode);
-//     std::string generate_hash() const;
-//     std::string serialize() const;
-//     static Commit deserialize(const std::string& serialized_data);
+public:
+    Commit(const std::string &message, const std::string &treeHash, const std::string &parentTreeHash, const std::string &committerName, const std::string &committerEmail);
 
-//     std::string get_message() const;
-//     std::string get_author() const;
-//     std::string get_parent_hash() const;
-//     std::string get_tree_hash() const;
-//     const std::unordered_map<std::string, std::pair<std::string, std::string>>& get_files() const;
+    std::string getHash() const;
+    std::string getMessage() const;
+    std::time_t getTimestamp() const;
+    std::string getParentTreeHash() const;
+    std::string getTreeHash() const;
 
-// private:
-//     std::string message;
-//     std::string author;
-//     std::string parent_hash;
-//     std::string tree_hash;
-//     std::unordered_map<std::string, std::pair<std::string, std::string>> files; // path -> (hash, mode)
-    
-//     std::string calculate_hash() const;
-// };
+    // Other methods
+    std::string generateHash() const;
+    std::string toString() const;
 
+    void writeToFile(const std::string& objectsDir) const;
+};
 
-// #endif
+#endif

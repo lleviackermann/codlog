@@ -17,6 +17,7 @@ MAIN_FILE = $(SRC_DIR)/main
 COMMANDS_HANDLER = $(SRC_DIR)/commands_handler
 
 # All objects files
+# BASE_OBJ_FILE = $(OBJECTS_DIR)/base_obj
 TREE_FILE = $(OBJECTS_DIR)/tree
 BLOB_FILE = $(OBJECTS_DIR)/blob
 COMMIT_OBJ_FILE = $(OBJECTS_DIR)/commit_obj
@@ -39,7 +40,7 @@ CFLAGS = -Wall -g -std=c++17
 LDFLAGS = -lssl -lcrypto
 
 # Source files
-SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp $(STAGE_FILE).cpp $(CONFIG_UTILLS_FILE).cpp $(CONFIG_CMD_FILE).cpp
+SRCS = $(MAIN_FILE).cpp $(COMMANDS_HANDLER).cpp $(TREE_FILE).cpp $(BLOB_FILE).cpp $(COMMIT_OBJ_FILE).cpp $(ADD_FILE).cpp $(COMMIT_CMD_FILE).cpp $(INIT_FILE).cpp $(LOG_FILE).cpp $(STATUS_FILE).cpp $(HELPER_FILE).cpp $(STAGE_FILE).cpp $(CONFIG_UTILLS_FILE).cpp $(CONFIG_CMD_FILE).cpp 
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -69,6 +70,8 @@ $(HELPER_FILE).o: $(HELPER_FILE).cpp $(HELPER_FILE).h
 $(STAGE_FILE).o: $(STAGE_FILE).cpp $(STAGE_FILE).h
 $(CONFIG_UTILLS_FILE).o: $(CONFIG_UTILLS_FILE).cpp $(CONFIG_UTILLS_FILE).h
 $(CONFIG_CMD_FILE).o: $(CONFIG_CMD_FILE).cpp $(CONFIG_CMD_FILE).h
+# $(BASE_OBJ_FILE).o: $(CONFIG_CMD_FILE).cpp $(CONFIG_CMD_FILE).h
+
 
 # Rules for commands
 

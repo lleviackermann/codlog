@@ -18,7 +18,7 @@ namespace {
     std::mutex staged_file_mutex;
     std::string blob_def = "blob";
     std::mutex file_write_mutex;
-    std::mutex cout_lock;
+    // std::mutex cout_lock;
     std::unique_ptr<StagingArea> index_file_entries;
     std::unique_ptr<StagingArea> staged_file_entries;
 }
@@ -106,10 +106,10 @@ void process_files(std::queue<std::filesystem::path>& filePathStore,
 
         std::filesystem::path full_path = repo_path / relative_path;
         std::filesystem::path obj_directory = repo_path / ".codlog" / "objects";
-        {
-            std::lock_guard<std::mutex> coulo(cout_lock);
-            std::cout << full_path << " " << std::filesystem::exists(full_path) << std::endl;
-        }
+        // {
+        //     std::lock_guard<std::mutex> coulo(cout_lock);
+        //     std::cout << full_path << " " << std::filesystem::exists(full_path) << std::endl;
+        // }
         try {
             Blob blob(full_path);
             std::string file_hash = blob.getHash();

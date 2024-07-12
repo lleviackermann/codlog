@@ -9,24 +9,23 @@
 #include <string>
 
 int CommandsHandler::executeCommand(const std::string& command, const std::vector<std::string>& args) {
+    std::string initialized_repo = "";
+    if(command != "init") initialized_repo = get_initialised_repo(args.back());
     if (command == "init") {
         init_command(args);
     } else if (command == "add") {
-        std::string initialized_repo = get_initialised_repo(args.back());
         add_command(args, initialized_repo);
     } else if (command == "commit") {
-        std::string initialized_repo = get_initialised_repo(args.back());
         commit_command(args, initialized_repo);
     } else if (command == "status") {
-        std::string initialized_repo = get_initialised_repo(args.back());
         status_command(args, initialized_repo);
     } else if (command == "config") {
         config_command(args);
     // } else if (command == "log") {
     //     log(args);
     // } 
-    // } else if (command == "log") {
-    //     log(args);
+    } else if (command == "commit") {
+        commit_command(args, initialized_repo);
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
         return 1;

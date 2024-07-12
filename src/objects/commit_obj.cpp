@@ -1,89 +1,114 @@
-// #include <commit_obj.h>
-// #include <sstream>
-// #include <iomanip>
-// #include <chrono>
-// #include <openssl/sha.h>
+#include <commit_obj.h>
+#include <config.h>
+#include <sstream>
+#include <iomanip>
+#include <openssl/sha.h>
+#include <string>
+#include <ctime>
+#include <iostream>
+#include <fstream>
+Commit::Commit(const std::string &message, const std::string &treeHash, const std::string &parentTreeHash, const std::string &committerName, const std::string &committerEmail)
+    : treeHash(treeHash), parentTreeHash(parentTreeHash), message(message), committerName(committerName), committerEmail(committerEmail)
+{
+    timestamp = std::time(nullptr);
+    std::cout << timestamp << std::endl;
+    hash = generateHash();
+}
 
-// Commit::Commit() {}
+std::string Commit::getHash() const
+{
+    return hash;
+}
 
-// Commit::Commit(const std::string& message, const std::string& author, const std::string& parent_hash)
-//     : message(message), author(author), parent_hash(parent_hash) {}
+std::string Commit::getMessage() const
+{
+    return message;
+}
 
-// void Commit::set_tree_hash(const std::string& hash) {
-//     tree_hash = hash;
-// }
+std::time_t Commit::getTimestamp() const
+{
+    return timestamp;
+}
 
-// void Commit::add_file(const std::string& path, const std::string& hash, const std::string& mode) {
-//     files[path] = std::make_pair(hash, mode);
-// }
+std::string Commit::getParentTreeHash() const
+{
+    return parentTreeHash;
+}
 
-// std::string Commit::generate_hash() const {
-//     return calculate_hash();
-// }
+std::string Commit::getTreeHash() const
+{
+    return treeHash;
+}
 
-// std::string Commit::serialize() const {
-//     std::ostringstream oss;
-//     oss << "tree " << tree_hash << "\n";
-//     oss << "parent " << parent_hash << "\n";
-//     oss << "author " << author << "\n";
-//     oss << "message " << message << "\n";
-    
-//     for (const auto& [path, info] : files) {
-//         oss << info.second << " " << info.first << " " << path << "\n";
-//     }
+std::string time_t_to_unix_timestamp_string(std::time_t time) {
+    return std::to_string(time);
+}
 
-//     return oss.str();
-// }
+std::string Commit::generateHash() const
+{
+    try {
+        const std::string strTimestamp = time_t_to_unix_timestamp_string(timestamp);
+        std::vector<unsigned char> data;
+        data.insert(data.end(), treeHash.begin(), treeHash.end());
+        data.insert(data.end(), parentTreeHash.begin(), parentTreeHash.end());
+        data.insert(data.end(), strTimestamp.begin(), strTimestamp.end());
+        data.insert(data.end(), message.begin(), message.end());
+        data.insert(data.end(), committerName.begin(), committerName.end());
+        data.insert(data.end(), committerEmail.begin(), committerEmail.end());
 
-// Commit Commit::deserialize(const std::string& serialized_data) {
-//     std::istringstream iss(serialized_data);
-//     std::string line;
-//     Commit commit;
+        unsigned char hash[SHA_DIGEST_LENGTH];
+        SHA1(data.data(), data.size(), hash);
+        std::stringstream ss;
+        for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+        {
+            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
+        }
+        return ss.str();
+    } catch(const std::exception& e) {
+        std::cout << e.what() << std::endl;
+        throw std::runtime_error("In generate hash \n");
+    }
 
-//     while (std::getline(iss, line)) {
-//         std::istringstream line_stream(line);
-//         std::string key, value;
-//         line_stream >> key;
+}
 
-//         if (key == "tree") {
-//             line_stream >> commit.tree_hash;
-//         } else if (key == "parent") {
-//             line_stream >> commit.parent_hash;
-//         } else if (key == "author") {
-//             std::getline(line_stream, commit.author);
-//             commit.author = commit.author.substr(1); // Remove leading space
-//         } else if (key == "message") {
-//             std::getline(line_stream, commit.message);
-//             commit.message = commit.message.substr(1); // Remove leading space
-//         } else {
-//             // This is a file entry
-//             std::string mode, hash, path;
-//             line_stream >> hash >> path;
-//             commit.files[path] = std::make_pair(hash, key); // key here is the mode
-//         }
-//     }
+std::string Commit::toString() const
+{
+    std::stringstream ss;
+    ss << "tree " << treeHash << "\n"
+       << "parent " << parentTreeHash << "\n"
+       << "committer " << committerName << " <"
+       << committerEmail << "> " << std::ctime(&timestamp) << "\n"
+       << "\n"
+       << message << "\n";
 
-//     return commit;
-// }
+    return ss.str();
+}
 
-// std::string Commit::get_message() const { return message; }
-// std::string Commit::get_author() const { return author; }
-// std::string Commit::get_parent_hash() const { return parent_hash; }
-// std::string Commit::get_tree_hash() const { return tree_hash; }
-// const std::unordered_map<std::string, std::pair<std::string, std::string>>& Commit::get_files() const { return files; }
+void Commit::writeToFile(const std::string& objectsDir) const {
+    if (hash.length() < 3) {
+        throw std::runtime_error("Invalid hash length");
+    }
 
-// std::string Commit::calculate_hash() const {
-//     std::string content = serialize();
-//     unsigned char hash[SHA256_DIGEST_LENGTH];
-//     SHA256_CTX sha256;
-//     SHA256_Init(&sha256);
-//     SHA256_Update(&sha256, content.c_str(), content.length());
-//     SHA256_Final(hash, &sha256);
+    std::string subDir = hash.substr(0, 2);
+    std::string fileName = hash.substr(2);
 
-//     std::stringstream ss;
-//     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-//         ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
-//     }
+    std::filesystem::path fullPath = std::filesystem::path(objectsDir) / subDir / fileName;
 
-//     return ss.str();
-// }
+    // Create subdirectory if it doesn't exist
+    std::filesystem::create_directories(fullPath.parent_path());
+
+    std::ofstream file(fullPath, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Unable to create file: " + fullPath.string());
+    }
+
+    std::string content = toString();
+    file.write(content.c_str(), content.length());
+
+    if (!file) {
+        if(file.is_open()) file.close();
+        throw std::runtime_error("Error writing to file: " + fullPath.string());
+    }
+
+    file.close();
+}

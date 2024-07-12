@@ -12,9 +12,10 @@ void Tree::addEntry(const std::string &mode, const std::string &obj_ty, const st
     entries.emplace_back(mode, obj_ty, hash, name);
 }
 
-void Tree::addEntry(TreeEntry toadd) {
+void Tree::addEntry(TreeEntry& toadd) {
     entries.push_back(toadd);
 }
+
 std::vector<unsigned char> Tree::serialize() const
 {
     std::vector<unsigned char> content;
@@ -105,11 +106,7 @@ void Tree::writeToFile(const std::filesystem::path &output_directory)
         binary_content.push_back(' ');
         binary_content.insert(binary_content.end(), entry.obj_type.begin(), entry.obj_type.end());
         binary_content.push_back(' ');
-        for (unsigned int i = 0; i < entry.obj_hash.length(); i += 2) {
-            std::string byteString = entry.obj_hash.substr(i, 2);
-            unsigned char byte = static_cast<unsigned char>(strtol(byteString.c_str(), NULL, 16));
-            binary_content.push_back(byte);
-        }
+        binary_content.insert(binary_content.end(), entry.obj_hash.begin(), entry.obj_hash.end());
         binary_content.push_back(' ');
         binary_content.insert(binary_content.end(), entry.obj_name.begin(), entry.obj_name.end());
         binary_content.push_back('\n');

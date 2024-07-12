@@ -12,7 +12,7 @@ private:
     
 public:
     void addEntry(const std::string& mode, const std::string& obj_ty, const std::string& hash, const std::string& name);
-    void addEntry(TreeEntry toadd);
+    void addEntry(TreeEntry& toadd);
     std::vector<unsigned char> serialize() const;
     std::string calculateHash();
     std::string toString() const;
