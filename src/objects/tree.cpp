@@ -83,20 +83,20 @@ void Tree::writeToFile(const std::filesystem::path &output_directory)
 
     // Formulate the output file path
     std::string hash = std::move(calculateHash());
-    std::filesystem::path output_file_sudir_path = output_directory / hash.substr(0, 2);
+    std::filesystem::path output_file_subdir_path = output_directory / hash.substr(0, 2);
 
-    if(!std::filesystem::exists(output_file_sudir_path)) {
-        std::filesystem::create_directories(output_file_sudir_path);
+    if(!std::filesystem::exists(output_file_subdir_path)) {
+        std::filesystem::create_directories(output_file_subdir_path);
     }
 
-    std::filesystem::path output_file_path = output_file_sudir_path / hash.substr(2);
+    std::filesystem::path output_file_path = output_file_subdir_path / hash.substr(2);
     // Check if the file already exists
     if (std::filesystem::exists(output_file_path))
     {
         return;
     }
 
-    std::ofstream output_file(output_file_path, std::ios::binary | std::ios::out);
+    std::fstream output_file(output_file_path, std::ios::binary | std::ios::out);
     std::vector<unsigned char> binary_content;
     for (const auto &entry : entries)
     {
@@ -105,9 +105,11 @@ void Tree::writeToFile(const std::filesystem::path &output_directory)
         binary_content.push_back(' ');
         binary_content.insert(binary_content.end(), entry.obj_type.begin(), entry.obj_type.end());
         binary_content.push_back(' ');
-        binary_content.insert(binary_content.end(), entry.obj_hash.begin(), entry.obj_hash.end());
-        binary_content.push_back(' ');
-        binary_content.push_back(' ');
+        for (unsigned int i = 0; i < entry.obj_hash.length(); i += 2) {
+            std::string byteString = entry.obj_hash.substr(i, 2);
+            unsigned char byte = static_cast<unsigned char>(strtol(byteString.c_str(), NULL, 16));
+            binary_content.push_back(byte);
+        }
         binary_content.push_back(' ');
         binary_content.insert(binary_content.end(), entry.obj_name.begin(), entry.obj_name.end());
         binary_content.push_back('\n');
@@ -118,12 +120,12 @@ void Tree::writeToFile(const std::filesystem::path &output_directory)
         throw std::runtime_error("File: blob.cpp\nFunction: writeToFile\nError: Failed to open file for writing: " + output_file_path.string());
     }
 
-    // Set the file permissions to read and write
-    std::filesystem::permissions(output_file_path, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
 
     // Write binary content to the file
     output_file.write(reinterpret_cast<const char *>(binary_content.data()), binary_content.size());
 
+    // Set the file permissions to read and write
+    std::filesystem::permissions(output_file_path, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
     if (!output_file.good())
     {
         output_file.close();

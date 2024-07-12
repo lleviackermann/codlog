@@ -6,6 +6,8 @@
 #include <openssl/sha.h>
 #include <iostream>
 #include <fstream>
+#include <cstring>
+#include <cerrno>
 
 std::string Blob::calculateSHA1(const std::vector<unsigned char> &data)
 {
@@ -16,7 +18,6 @@ std::string Blob::calculateSHA1(const std::vector<unsigned char> &data)
     {
         ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
     }
-
     return ss.str();
 }
 
@@ -41,15 +42,34 @@ void Blob::read_file_binary()
 
 Blob::Blob(const std::filesystem::path &file_path) : file(file_path, std::ios::binary | std::ios::ate)
 {
+    if (!std::filesystem::exists(file_path))
+    {
+        throw std::runtime_error("File does not exist: " + file_path.string());
+    }
+
     std::filesystem::file_status status = std::filesystem::status(file_path);
+    
+    // Check if file is readable
+    if ((status.permissions() & std::filesystem::perms::owner_read) == std::filesystem::perms::none)
+    {
+        throw std::runtime_error("File is not readable: " + file_path.string());
+    }
+
     if ((status.permissions() & std::filesystem::perms::owner_exec) != std::filesystem::perms::none)
         file_mode = FileMode::EXECUTABLE;
     else
         file_mode = FileMode::REGULAR;
+
     if (!file.is_open())
     {
-        throw std::runtime_error("File_Path: ./src/objects/blob.cpp\nFunction: Blob Constructor\nError: Unable to open file: " + file_path.string());
+        file.open(file_path, std::ios::binary | std::ios::ate);
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Unable to open file: " + file_path.string() + 
+                                     "\nError: " + std::strerror(errno));
+        }
     }
+
     read_file_binary();
     hash = calculateSHA1(getBlobHashContent());
 }
@@ -118,7 +138,8 @@ void Blob::writeToFile(const std::filesystem::path &output_directory) const
     // Formulate the output file path
     std::filesystem::path output_file_sudir_path = output_directory / hash.substr(0, 2);
 
-    if(!std::filesystem::exists(output_file_sudir_path)) {
+    if (!std::filesystem::exists(output_file_sudir_path))
+    {
         std::filesystem::create_directories(output_file_sudir_path);
     }
 
@@ -130,7 +151,7 @@ void Blob::writeToFile(const std::filesystem::path &output_directory) const
         return;
     }
 
-    std::ofstream output_file(output_file_path, std::ios::binary | std::ios::out);
+    std::ofstream output_file(output_file_path, std::ios::binary);
     if (!output_file.is_open())
     {
         throw std::runtime_error("File: blob.cpp\nFunction: writeToFile\nError: Failed to open file for writing: " + output_file_path.string());

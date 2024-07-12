@@ -39,7 +39,7 @@ std::vector<std::filesystem::path> get_all_file_paths(const std::filesystem::pat
     return filePathStore;
 }
 
-bool files_modified(const std::filesystem::path &initialized_repo)
+bool files_modified(const std::filesystem::path &initialized_repo, bool shouldWrite)
 {
     const std::filesystem::path index_file_path = initialized_repo / ".codlog/index";
     const std::filesystem::path staged_file_path = initialized_repo / ".codlog/staged";
@@ -47,7 +47,6 @@ bool files_modified(const std::filesystem::path &initialized_repo)
     StagingArea indexing_area(index_file_path);
     StagingArea staging_area(staged_file_path);
     std::vector<std::filesystem::path> all_files_current = get_all_file_paths(initialized_repo);
-
     std::vector<std::string> staged_modified;
     std::vector<std::string> unstaged_modified;
     std::vector<std::string> staged_untracked;
@@ -72,7 +71,7 @@ bool files_modified(const std::filesystem::path &initialized_repo)
         staged_files.insert(entry.first);
     }
 
-    std::mutex staged_modified_mutex, unstaged_modified_mutex, staged_untracked_mutex, unstaged_untracked_mutex, deleted_mutex;
+    std::mutex staged_modified_mutex, unstaged_modified_mutex, staged_untracked_mutex, unstaged_untracked_mutex, deleted_mutex, get_flags_mutex;
 
     auto process_files = [&](std::vector<std::filesystem::path>::iterator begin,
                              std::vector<std::filesystem::path>::iterator end)
@@ -80,17 +79,29 @@ bool files_modified(const std::filesystem::path &initialized_repo)
         for (auto it = begin; it != end; ++it)
         {
             std::string file_path = it->string();
-            current_files.insert(file_path);
             const std::filesystem::path fi_path = initialized_repo / file_path;
             Blob blob(fi_path);
             std::string cur_file_hash = blob.getHash();
-            if (staged_files.count(file_path))
+            bool in_stage, in_index;
+            std::string staged_file_hash = "", indexed_file_hash = "";
             {
-                if (index_files.count(file_path))
+                std::lock_guard<std::mutex> search(get_flags_mutex);
+                in_stage = staged_files.count(file_path);
+                in_index = index_files.count(file_path);
+                if (in_stage) 
+                    staged_file_hash = staged_entries[file_path].obj_hash;
+                if (in_index)
+                    indexed_file_hash = index_entries[file_path].obj_hash;
+            }
+            if (in_stage)
+            {
+                if (in_index)
                 {
-                    std::lock_guard<std::mutex> lock(staged_modified_mutex);
-                    staged_modified.push_back(file_path);
-                    if (cur_file_hash != staged_entries[file_path].obj_hash)
+                    {
+                        std::lock_guard<std::mutex> lock(staged_modified_mutex);
+                        staged_modified.push_back(file_path);
+                    }
+                    if (cur_file_hash != staged_file_hash)
                     {
                         std::lock_guard<std::mutex> lock_under(unstaged_modified_mutex);
                         unstaged_modified.push_back(file_path);
@@ -98,20 +109,24 @@ bool files_modified(const std::filesystem::path &initialized_repo)
                 }
                 else
                 {
-                    std::lock_guard<std::mutex> lock(staged_untracked_mutex);
-                    staged_untracked.push_back(file_path);
-                    if (cur_file_hash != staged_entries[file_path].obj_hash)
                     {
-                        std::lock_guard<std::mutex> lock_under(unstaged_modified_mutex);
-                        unstaged_modified.push_back(file_path);
+                        std::lock_guard<std::mutex> lock(staged_untracked_mutex);
+                        staged_untracked.push_back(file_path);
+                    }
+                    {
+                        if (cur_file_hash != staged_file_hash)
+                        {
+                            std::lock_guard<std::mutex> lock_under(unstaged_modified_mutex);
+                            unstaged_modified.push_back(file_path);
+                        }
                     }
                 }
             }
             else
             {
-                if (index_files.count(file_path))
+                if (in_index)
                 {
-                    if (cur_file_hash != index_entries[file_path].obj_hash)
+                    if (cur_file_hash != indexed_file_hash)
                     {
                         std::lock_guard<std::mutex> lock_under(unstaged_modified_mutex);
                         unstaged_modified.push_back(file_path);
@@ -132,6 +147,7 @@ bool files_modified(const std::filesystem::path &initialized_repo)
     if (!all_files_current.empty())
     {
         size_t files_per_thread = (all_files_current.size() + num_threads - 1) / num_threads;
+        std::cout << "files per thread and thread " << files_per_thread << " " << num_threads << std::endl;
         auto chunk_begin = all_files_current.begin();
 
         while (chunk_begin != all_files_current.end())
@@ -143,7 +159,14 @@ bool files_modified(const std::filesystem::path &initialized_repo)
 
         for (auto &future : futures)
         {
-            future.wait();
+            try
+            {
+                future.get();
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Exception in thread: " << e.what() << std::endl;
+            }
         }
     }
 
@@ -164,33 +187,36 @@ bool files_modified(const std::filesystem::path &initialized_repo)
     std::sort(unstaged_untracked.begin(), unstaged_untracked.end());
     std::sort(deleted_files.begin(), deleted_files.end());
 
-    // Print status in Git-like format
-    if(staged_modified.size() || staged_untracked.size() || deleted_files.size()) {
-        std::cout << "Changes to be committed:\n";
-        for (const auto &file : staged_modified)
+    if(shouldWrite) {
+        if (staged_modified.size() || staged_untracked.size() || deleted_files.size())
         {
-            std::cout << "  (modified): " << file << "\n";
+            std::cout << "Changes to be committed:\n";
+            for (const auto &file : staged_modified)
+            {
+                std::cout << "  (modified): " << file << "\n";
+            }
+            for (const auto &file : staged_untracked)
+            {
+                std::cout << "  (new file): " << file << "\n";
+            }
+            for (const auto &file : deleted_files)
+            {
+                std::cout << "  (deleted file): " << file << "\n";
+            }
         }
-        for (const auto &file : staged_untracked)
-        {
-            std::cout << "  (new file): " << file << "\n";
-        }
-        for (const auto &file : deleted_files)
-        {
-            std::cout << "  (deleted file): " << file << "\n";
-        }
-    }
 
-    if(unstaged_modified.size() || unstaged_untracked.size()) {
-        std::cout << "\nChanges not staged for commit:\n";
-        for (const auto &file : unstaged_modified)
+        if (unstaged_modified.size() || unstaged_untracked.size())
         {
-            std::cout << "  (modified): " << file << "\n";
-        }
-        std::cout << "\n  Untracked files:\n";
-        for (const auto &file : unstaged_untracked)
-        {
-            std::cout << "    " << file << "\n";
+            std::cout << "\nChanges not staged for commit:\n";
+            for (const auto &file : unstaged_modified)
+            {
+                std::cout << "  (modified): " << file << "\n";
+            }
+            std::cout << "\n  Untracked files:\n";
+            for (const auto &file : unstaged_untracked)
+            {
+                std::cout << "    " << file << "\n";
+            }
         }
     }
 
@@ -209,9 +235,10 @@ void check_arguments(const std::vector<std::string> &args)
 void status_command(const std::vector<std::string> &args, std::string &initialized_repo)
 {
     check_arguments(args);
-    bool flag__ = files_modified(std::filesystem::path(initialized_repo));
+    bool flag__ = files_modified(std::filesystem::path(initialized_repo), true);
 
-    if (!flag__) {
+    if (!flag__)
+    {
         std::cout << "Nothing to commit, working tree clean\n";
     }
 }
